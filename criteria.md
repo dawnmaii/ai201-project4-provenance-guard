@@ -12,7 +12,7 @@ The number of false positives labeled high-confidence AI is at most 3 out of the
 
 ## 2. Score spread between AI- and human-written text should be at a minimum gap of 0.60
 
-The score spread between my 3 clearly-AI texts and my 3 clearly-human texts is at least 0.60, with no human texts scoring above the lowest AI text. The gap will be measured by calculating lowest AI text score - highest human text score. If the gap is negative, that means the groups overlap.
+The score spread between my 3 clearly-AI texts and my 3 clearly-human texts is at least 0.60. The gap will be measured by calculating lowest AI text score - highest human text score. If the gap is negative, that means the groups overlap.
 
 **Why this target:**  A lower score spread makes it harder for the application to tell the two groups of text apart. It would mislabel text that a human writer wrote as AI, forcing them to sound more like AI to fix the error.
 
@@ -22,7 +22,7 @@ The score spread between my 3 clearly-AI texts and my 3 clearly-human texts is a
 
 All eight texts should receive their expected label. 
 
-**Why this target:** Given the previous criteria, having two texts labeled as "unsure" allows us to see whether we need to tweak the score spread and where the uncertainty lies in those two texts. Without the correct label, writers are not informed about where their writing stands.
+**Why this target:** Having two texts labeled as "unsure" allows us to see whether we need to tweak the score spread and where the uncertainty lies in those two texts. Without the correct label, writers are not informed about where their writing stands.
 
 ---
 
