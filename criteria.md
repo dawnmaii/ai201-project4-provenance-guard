@@ -1,104 +1,55 @@
 # Acceptance criteria — Provenance Guard
 
-Five criteria that say what "working" means for this service, written in unit 7
-**before** you built it.
+---
 
-**All five are yours.** None are given.
+## 1. False positives <= 3
 
-An acceptance criterion names a number or something plainly observable. *"The
-detector is accurate"* is an opinion — and perfect AI detection isn't possible
-anyway, so it's an opinion about something nobody can deliver. *"Of 10 pieces I
-wrote myself, at most 1 is labelled high-confidence AI"* is a criterion.
+The number of false positives labeled high-confidence AI is at most 3 out of the 10 texts I wrote myself.
 
-Under each, write a sentence or two on **why that target**. *"I allow at most 1
-false positive in 10 because on a writing site a wrong accusation costs more
-than a missed detection"* is a real answer.
-
-> Missing your own targets next unit costs you nothing. Setting a target so
-> easy you can't miss it does.
+**Why this target:** If a human's writing is flagged as "high-confidence AI", they may lose trust in the application and won't bother to submit more of their original work for the application. 3 allows for edge cases to be considered (such as AI editing being used). Anything less will not allow for AI-assisted human writing that should still count, anything more will mislabel AI writing as human.
 
 ---
 
-## Pick numbers you can defend
+## 2. Score spread between AI- and human-written text should be at a minimum gap of 0.60
 
-**Cover at least three of these five areas.** They're prompts, not a form.
+The score spread between my 3 clearly-AI texts and my 3 clearly-human texts is at least 0.60, with no human texts scoring above the lowest AI text. The gap will be measured by calculating lowest AI text score - highest human text score. If the gap is negative, that means the groups overlap.
 
-| Area | A question it could answer |
-|---|---|
-| False positives | How often may a human's writing get called AI? |
-| Score spread | How far apart should clearly-AI and clearly-human text score? |
-| Label coverage | Is every one of your three labels actually reachable? |
-| The appeal path | Does an appeal always change status and always get recorded? |
-| Bad input | What happens when `text` is missing, empty, or enormous? |
-
-Two things worth knowing before you pick numbers:
-
-- **The expensive mistake is one-sided.** Missing some AI text costs the site a
-  little. Accusing a real writer costs that person a lot. A criterion that
-  treats both errors as equally bad is describing a system nobody would ship.
-- **Unit 8 tests across three trials, and the target has to hold across all
-  three.** Your first signal runs a model, so identical input can score
-  differently twice. A target of "at most 1 in 10" against trials of 2, 1, 2 is
-  a **miss**.
-
----
-## 1.
-
-<!-- Your criterion. It must name a number. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:**  A lower score spread makes it harder for the application to tell the two groups of text apart. It would mislabel text that a human writer wrote as AI, forcing them to sound more like AI to fix the error.
 
 ---
 
-## 2.
+## 3. In `scenarios.py`, three texts should be labeled as AI, two texts should be labeled as unsure, and three texts should be labeled as human
 
-<!-- Your criterion. -->
+All eight texts should receive their expected label. 
 
-
-
-**Why this target:**
-
-
+**Why this target:** Given the previous criteria, having two texts labeled as "unsure" allows us to see whether we need to tweak the score spread and where the uncertainty lies in those two texts. Without the correct label, writers are not informed about where their writing stands.
 
 ---
 
-## 3.
+## 4. Appeal path should be 100%
 
-<!-- Your criterion. -->
+Of 10 appeals sent to `POST /appeal` with a real `content_id`, 10 set the status to `under_review` and wrote an entry to the audit log after checking `GET /log`.
 
-
-
-**Why this target:**
-
-
+**Why this target:** Assuming correct input, the application should be following a deterministic path 100% of the time. If an appeal drops without a record, the writer will either give up on submitting or try again, resulting in multiple duplicate requests.
 
 ---
 
-## 4.
+## 5. Correct status codes for bad inputs
 
-<!-- Your criterion. -->
+For 8 bad-input requests sent (see `scenarios.py`), all 8 return the status code and error name listed below based on their type and where the request was sent:
 
+`/submit`
 
+- 400 `invalid_json`: body isn't a JSON object
+- 400 `missing_field`: `text` or `creator_id` is absent
+- 400 `empty_text`: `text` is blank
+- 413 `text_too_long`: `text` is over 3,000 characters
 
-**Why this target:**
+`/appeal`
 
+- 404 `content_not_found`: unknown IDs
 
-
----
-
-## 5.
-
-<!-- Your criterion. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** It's important that bad input is labeled with the correct status code for easy troubleshooting and communication to the user, so that such input is quickly corrected before being resubmitted. A writer needs to know whether it's the system's fault or their own fault that their writing is not accepted as valid input.
 
 ---
 
