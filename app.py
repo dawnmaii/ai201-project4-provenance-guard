@@ -150,6 +150,11 @@ def health():
 
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
+def _error(error: str, message: str, status: int, **extra):
+    """One shape for every error this service returns: {"error", "message", ...}."""
+    return jsonify({"error": error, "message": message, **extra}), status
+
+
 @app.post("/submit")
 # @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
@@ -199,7 +204,29 @@ def submit():
     what should this do when `text` is missing, empty, or enormous? A crash on
     a malformed input is one of the most common real failures there is.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _error("invalid_json", "Request body must be a JSON object.", 400)
+
+    if "text" not in payload:
+        return _error("missing_field", "text is required.", 400)
+    if "creator_id" not in payload:
+        return _error("missing_field", "creator_id is required.", 400)
+
+    text = payload["text"]
+    if not isinstance(text, str) or not text.strip():
+        return _error("empty_text", "text can't be empty.", 400)
+    if len(text) > config.MAX_TEXT_CHARS:
+        return _error(
+            "text_too_long",
+            f"text must be {config.MAX_TEXT_CHARS:,} characters or fewer.",
+            413,
+            limit=config.MAX_TEXT_CHARS,
+        )
+
+    creator_id = payload["creator_id"]
+    if not isinstance(creator_id, str) or not creator_id.strip():
+        return _error("missing_field", "creator_id is required.", 400)
 
     # TODO: delete this and build the route.
     return jsonify({
@@ -232,7 +259,18 @@ def appeal():
     to the person on the other end. It's the only thing standing between a
     wrong accusation and nothing at all.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _error("invalid_json", "Request body must be a JSON object.", 400)
+
+    content_id = payload.get("content_id")
+    reasoning = payload.get("reasoning")
+    if not (isinstance(content_id, str) and content_id.strip()) or not (
+        isinstance(reasoning, str) and reasoning.strip()
+    ):
+        return _error("missing_field", "content_id and reasoning are required.", 400)
+    if not audit.entries_for(content_id):
+        return _error("content_not_found", "No submission with that content_id.", 404)
 
     # TODO: delete this and build the route.
     return jsonify({

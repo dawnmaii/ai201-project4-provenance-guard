@@ -1,6 +1,6 @@
 # Provenance Guard
 
-> ### 👋 Start here
+> ## 👋 Start here
 >
 > **New to this repo? Read [RUNNING.md](RUNNING.md) first.**
 >
@@ -21,25 +21,52 @@
 > That's a web service. Something sent it text and it sent something back.
 > Everything this unit is filling in the middle.
 >
-> **The rest of this file is your submission.** Fill it in as you go.
 
 ---
 
-<!-- ─────────────────────────────────────────────────────────────────────────
-     Unit 7 asks for the first five sections. Unit 8 adds the five below.
-
-     Everything is pasted as TEXT. A pasted curl response gets full credit;
-     a picture of your terminal gets none.
-     ───────────────────────────────────────────────────────────────────────── -->
-
-<!-- ═══════════════════════ UNIT 7 — THE BUILD ═══════════════════════ -->
-
 ## What This Does
 
-<!-- The path a submission takes, from arriving to the label a reader sees.
-     Six or seven steps — this is the trace you wrote in Milestone 1. -->
+A submission takes these steps:
 
+1. A client sends `POST /submit` with `text` and `creator_id`.
+2. `app.py::submit` validates the input. A missing or empty `text`, or a missing `creator_id`, gets a 400. A `text` over 3,000 characters gets a 413. Every error comes back as JSON.
+3. Signal one (`detector.py::model_signal`) scores how predictable the text is to a local language model.
+4. Signal two (`stylometry.py::style_signal`) scores the shape of the text.
+5. `scoring.py::combine_signals` merges the two scores into one score ranging from 0 to 1.
+6. `scoring.py::score_to_label` turns that score into a guess (`ai`, `human`, or `unsure`) and a plain-English label.
+7. `audit.log_decision` writes the decision to `logs/audit.jsonl`, and the response returns `content_id`, `guess`, `confidence`, `label`, `model_score`, and `style_score`.
 
+**The false-positive trace.** A real writer submits their own work and gets a score of 0.80, which is above the AI threshold. The label they see says the text was probably written by AI. They can `POST /appeal` with their reasoning. The status moves to `under_review` and the appeal is logged next to the original decision.
+
+### Endpoint shapes
+
+`POST /submit`
+
+- In: `{"text": string, "creator_id": string}`. `text` is 3,000 characters at most.
+- Out (200):
+  - `content_id`: string
+  - `guess`: string, one of `ai`, `human`, `unsure`
+  - `confidence`: number, 0 to 1
+  - `label`: string, the sentence a reader sees
+  - `model_score`: number, 0 to 1
+  - `style_score`: number, 0 to 1
+- Out (error): `{"error", "message"}`, one of:
+  - 400 `invalid_json`: body isn't a JSON object
+  - 400 `missing_field`: `text` or `creator_id` is absent
+  - 400 `empty_text`: `text` is blank
+  - 413 `text_too_long`: `text` is over 3,000 characters
+
+`POST /appeal`
+
+- In: `{"content_id": string, "reasoning": string}`. `reasoning` has no length limit yet.
+- Out (200):
+  - `content_id`: string
+  - `status`: string, always `under_review`
+  - `message`: string, "Your appeal was recorded. This item is under review."
+- Out (error): `{"error", "message"}`, one of:
+  - 400 `invalid_json`: body isn't a JSON object
+  - 400 `missing_field`: `content_id` or `reasoning` is absent or blank
+  - 404 `content_not_found`: no submission has that `content_id`
 
 ---
 
@@ -53,19 +80,19 @@
 
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** How predictable the text is to a local GPT-2 model. Text the model finds easy to predict scores as more AI-like.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Generated text tends to pick high-probability words. Human writing makes odder, less predictable choices.
 
-**What it can't see:**
+**What it can't see:** Plain or formal human writing is predictable, so it can score as AI. Very short text gives the model too little to work with. Lightly edited AI text can read as human.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** Sentence length spread, vocabulary variety (type-token ratio), and punctuation density. It measures shape only, with no understanding of meaning.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** AI prose tends toward even, mid-length sentences and a narrower vocabulary. Human writing is lumpier.
 
-**What it can't see:**
+**What it can't see:** Anything that changes the shape without changing the substance. Adding typos, splitting or merging sentences, or pasting in a quotation can all move it.
 
 ### The combining rule
 
@@ -83,8 +110,6 @@
 
 **A case where my two signals split, and what my rule does with it:**
 
-
-
 ---
 
 ## Label Variants
@@ -94,11 +119,11 @@
 
      Write them for someone who has never heard the word "threshold". -->
 
-| Label | Score range | The exact text a reader sees |
-|---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| Label                  | Score range | The exact text a reader sees |
+|------------------------|-------------|------------------------------|
+| high-confidence human  |  |  |
+| unsure                 |  |  |
+| high-confidence AI     |  |  |
 
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
@@ -114,7 +139,7 @@
 <!-- One submission and one appeal, pasted as text: the request, the response,
      and the log entries. -->
 
-**A submission**
+### A submission
 
 <!-- The response needs content_id, guess, confidence, label, AND both
      signal scores - model_score and style_score. Unit 8's tools read those
@@ -131,7 +156,7 @@ $ curl -X POST http://127.0.0.1:5000/submit \
 
 ```
 
-**An appeal**
+### An appeal
 
 ```bash
 $ curl -X POST http://127.0.0.1:5000/appeal \
@@ -143,7 +168,7 @@ $ curl -X POST http://127.0.0.1:5000/appeal \
 
 ```
 
-**What the log shows afterwards**
+### What the log shows afterwards
 
 ```bash
 $ curl "http://127.0.0.1:5000/log?limit=3"
@@ -157,13 +182,13 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## How I Used AI
 
-**Moment 1**
+### Moment 1
 
 - *What I asked for:*
 - *What came back:*
 - *What I changed:*
 
-**Moment 2**
+### Moment 2
 
 - *What I asked for:*
 - *What came back:*
@@ -191,7 +216,7 @@ can look like one. -->
 
 <!-- python run_attacks.py --flood 15 -->
 
-```
+```text
 
 ```
 
@@ -202,9 +227,7 @@ can look like one. -->
 <!-- Every attack with its outcome and a held-or-broke mark.
      `run_attacks.py --label before` produces the table. -->
 
-
-
-**Ten audit log entries from the run**
+### Ten audit log entries from the run
 
 <!-- Choose entries that show the interesting failures, not the ten easiest. -->
 
@@ -214,8 +237,6 @@ can look like one. -->
 
 **The single worst outcome** — the one I'd least want to explain to a writer
 whose work got caught by it:
-
-
 
 ---
 
@@ -238,7 +259,7 @@ that produced it:
 
 ```
 
-**Diagnoses**
+### Diagnoses
 
 <!-- For each miss AND each broken attack: the stage and the mechanism.
 
@@ -254,8 +275,6 @@ that produced it:
 
      Look for a pattern. Five failures on one signal is one problem, not five. -->
 
-
-
 ---
 
 ## The Improvement
@@ -268,14 +287,10 @@ that produced it:
 
 <!-- Same format. `run_attacks.py --label after` -->
 
-
-
 **Did it help, and how do I know:**
 
 <!-- Widening the unsure band usually fixes one problem and creates another.
      Reporting that trade honestly is worth full credit. -->
-
-
 
 ---
 
@@ -284,14 +299,10 @@ that produced it:
 <!-- For each attack still getting through and each criterion still missed:
      what you'd do, and why you stopped. -->
 
-
-
 **The trade I'd make if this ran for real:**
 
 <!-- Two sentences. Fewer wrong accusations means more AI text getting through.
      Say which way you'd go and WHO PAYS FOR IT. -->
-
-
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
