@@ -228,15 +228,26 @@ def submit():
     if not isinstance(creator_id, str) or not creator_id.strip():
         return _error("missing_field", "creator_id is required.", 400)
 
-    # TODO: delete this and build the route.
+    import detector
+
+    content_id = str(uuid.uuid4())
+    model_score = detector.model_signal(text)
+
+    # Placeholders until M4 (style_score, combined_score) and M5 (guess, label).
+    audit.log_decision(
+        content_id=content_id,
+        creator_id=creator_id,
+        model_score=model_score,
+        status="decided",
+    )
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /submit isn't built yet — see the TODO in app.py.",
-        "you_sent": {
-            "text_length": len(payload.get("text", "")),
-            "creator_id": payload.get("creator_id"),
-        },
-    }), 501
+        "content_id": content_id,
+        "guess": None,
+        "confidence": None,
+        "label": None,
+        "model_score": model_score,
+        "style_score": None,
+    })
 
 
 @app.post("/appeal")

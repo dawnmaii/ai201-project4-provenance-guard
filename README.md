@@ -136,8 +136,7 @@ A submission takes these steps:
 
 ## Sample Run
 
-<!-- One submission and one appeal, pasted as text: the request, the response,
-     and the log entries. -->
+**Deviation from the M3 steps:** I skipped the hardcoded-response step, which asks for a placeholder return to confirm `curl` reaches the route before any logic is added. I built the validation and the signal call directly instead. The route was tested end to end with real requests, but if a failure appears later, I haven't isolated whether the route or the signal caused it.
 
 ### A submission
 
@@ -147,25 +146,39 @@ A submission takes these steps:
      diagnostics. -->
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/submit \
-  -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+$ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d '{\"text\": \"Regular exercise offers benefits that extend well beyond physical fitness. It supports cardiovascular health, improves sleep quality, and can reduce feelings of stress. Many people find that a consistent routine makes these benefits easier to maintain over time. Activities such as walking, swimming, and cycling are accessible to most adults and require little specialized equipment. Starting with modest goals and increasing gradually tends to produce the most sustainable results. Ultimately, the best exercise routine is the one a person can keep doing.\",    \"creator_id\": \"tester\"}'
+
 ```
 
 ```json
-
+{
+  "confidence": null,
+  "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
+  "guess": null,
+  "label": null,
+  "model_score": 0.756,
+  "style_score": null
+}
 ```
 
 ### An appeal
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/appeal \
-  -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+$ curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"785507d7-bddb-4946-88f3-d99537408b85\", \"reasoning\": \"I wrote this paragraph myself last week for a class, and I can show my draft.\"}'
+
 ```
 
-```json
+Current output. The appeal route is still the M3 stub, so it returns 501. Replace this with the 200 response once M5 is built.
 
+```json
+{
+  "error": "not_implemented",
+  "message": "POST /appeal isn't built yet — see the TODO in app.py.",
+  "you_sent": {
+    "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
+    "reasoning": "I wrote this paragraph myself last week for a class, and I can show my draft."
+  }
+}
 ```
 
 ### What the log shows afterwards
@@ -175,7 +188,22 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
-
+{
+  "count": 1,
+  "entries": [
+    {
+      "combined_score": null,
+      "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
+      "creator_id": "tester",
+      "guess": null,
+      "label": null,
+      "model_score": 0.756,
+      "status": "decided",
+      "style_score": null,
+      "timestamp": "2026-11-01T23:21:02+00:00"
+    }
+  ]
+}
 ```
 
 ---
