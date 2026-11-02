@@ -4,10 +4,6 @@ Signal two: the style signal.
 Signal one reads the text for meaning. This one measures it *as text* — the
 shape of it, without understanding a word.
 
-Three measures are stubbed below because the brief names those three. They are
-stubs, not implementations: what they compute is yours, and so is how you
-combine them.
-
     sentence_length_spread   do sentences vary in length, or march in step?
     type_token_ratio         how much of the vocabulary repeats?
     punctuation_density      how much punctuation, and how varied?
@@ -124,11 +120,7 @@ def style_signal(text: str) -> float:
       2. How to get each onto a comparable scale. A raw type-token ratio sits
          between 0 and 1; a raw punctuation count doesn't. Adding them
          unscaled means whichever has the bigger numbers wins by default.
-
-    Test it on the four calibration inputs from Milestone 4 — clearly AI,
-    clearly human, plain conventional human writing, lightly-edited AI — before
-    you trust it. Plain and ordinary, not formal: formal prose reads as *human*
-    to signal one, and it is plain writing that gets accused.
+         
     """
     if not words(text):
         return 0.5  # no words, no evidence either way

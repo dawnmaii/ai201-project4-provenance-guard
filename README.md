@@ -72,12 +72,6 @@ A submission takes these steps:
 
 ## Signals and Scoring
 
-<!-- For each signal: what property it measures, why that might differ between
-     human and AI writing, and WHAT IT CAN'T SEE.
-
-     The blind spot is not optional. If you can't name it you don't understand
-     the signal yet — and unit 8's attack set is built out of blind spots. -->
-
 ### Signal one — the model signal
 
 **What it measures:** How predictable the text is to a local GPT-2 model. Text the model finds easy to predict scores as more AI-like.
@@ -101,9 +95,6 @@ A submission takes these steps:
 **The numbers:** Model signal weight 0.5, style signal weight 0.5. Disagreement threshold 0.30. All three live in `config.py`.
 
 **Where it lives:** `scoring.py::combine_signals`
-
-<!-- ⚠️ The grader checks your code against that line. If your rule lives
-     somewhere else, say where. -->
 
 **A case where my two signals split, and what my rule does with it:**
 
@@ -145,11 +136,6 @@ I don't want to shame the writer for using AI, even if every word was written by
 **Deviation from the M3 steps:** I skipped the hardcoded-response step, which asks for a placeholder return to confirm `curl` reaches the route before any logic is added. I built the validation and the signal call directly instead. The route was tested end to end with real requests, but if a failure appears later, I haven't isolated whether the route or the signal caused it.
 
 ### A submission
-
-<!-- The response needs content_id, guess, confidence, label, AND both
-     signal scores - model_score and style_score. Unit 8's tools read those
-     two off the response, so leaving them out costs you next unit's
-     diagnostics. -->
 
 ```bash
 curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d '{\"text\": \"Regular exercise offers benefits that extend well beyond physical fitness. It supports cardiovascular health, improves sleep quality, and can reduce feelings of stress. Many people find that a consistent routine makes these benefits easier to maintain over time. Activities such as walking, swimming, and cycling are accessible to most adults and require little specialized equipment. Starting with modest goals and increasing gradually tends to produce the most sustainable results. Ultimately, the best exercise routine is the one a person can keep doing.\",    \"creator_id\": \"tester\"}'
@@ -230,17 +216,17 @@ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## How I Used AI
 
-### Moment 1
+### Moment 1: The sign error in criterion 2
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Help turning the score-spread criterion into a measurable target.
+- *What came back:* A draft formula that subtracted in the wrong direction (highest human score minus lowest AI score), so a positive gap meant the groups overlapped.
+- *What I changed:* I swapped the terms so the gap is lowest AI minus highest human, and a negative result means overlap.
 
-### Moment 2
+### Moment 2: The threshold move
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* How to make the high-confidence labels reachable with real text.
+- *What came back:* A proposal to move the thresholds to 0.46 and 0.64, after every calibration text landed in the unsure range.
+- *What I changed:* I accepted the move and wrote the trade-off into the README myself, including the cost of flagging writing that scores near 0.64.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
@@ -353,20 +339,6 @@ that produced it:
      Say which way you'd go and WHO PAYS FOR IT. -->
 
 <!-- ═════════════════════════════════════════════════════════════════════
-
-     SUBMISSION CHECKLIST — unit 7
-
-       [ ] criteria.md has five numbered criteria, each naming a target
-       [ ] Each has a reason underneath
-       [ ] POST /submit returns content_id, guess, confidence, label,
-           model_score and style_score
-       [ ] Two signals that measure DIFFERENT things, each with a named blind spot
-       [ ] Three label variants, all reachable, written out in full
-       [ ] POST /appeal changes status and writes to the log
-       [ ] Signals and Scoring names scoring.py::combine_signals
-       [ ] Sample Run: a submission AND an appeal, as pasted text
-       [ ] At least four new commits
-       [ ] Repository URL submitted — WRITE IT DOWN
 
      SUBMISSION CHECKLIST — unit 8
 
