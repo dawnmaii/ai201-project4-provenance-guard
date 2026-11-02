@@ -88,7 +88,7 @@ A submission takes these steps:
 
 ### Signal two — the style signal
 
-**What it measures:** Sentence length spread, vocabulary variety (type-token ratio), and punctuation density. It measures shape only, with no understanding of meaning.
+**What it measures:** Sentence length spread, vocabulary variety (type-token ratio), and punctuation density. It measures shape only, with no understanding of meaning. The style score is built from 1 minus each measure's scaled value, averaged; higher spread and variety, and more punctuation, read as human.
 
 **Why that might differ between human and AI writing:** AI prose tends toward even, mid-length sentences and a narrower vocabulary. Human writing is lumpier.
 
