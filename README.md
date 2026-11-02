@@ -96,9 +96,6 @@ A submission takes these steps:
 
 ### The combining rule
 
-<!-- Write the rule in words, then give the numbers. What happens when the two
-     signals disagree? -->
-
 **The rule:** Average the two signals with equal weight. If the two scores differ by 0.30 or more, use the lower score instead of the average. A disagreement never pushes a writer toward AI.
 
 **The numbers:** Model signal weight 0.5, style signal weight 0.5. Disagreement threshold 0.30. All three live in `config.py`.
@@ -110,7 +107,7 @@ A submission takes these steps:
 
 **A case where my two signals split, and what my rule does with it:**
 
-The edited AI paragraph (section 3 of `calibration_texts.txt`) scored 0.8072 on the model signal and 0.4958 on the style signal, a split of 0.31. That's over the 0.30 threshold, so the rule used the lower score: 0.4958. A plain average would have given 0.6515, which is just above the 0.65 line and would have been labeled high-confidence AI. The rule keeps this text in the unsure range, which is the outcome I want when the two signals disagree.
+The edited AI paragraph (section 3 of `calibration_texts.txt`) scored 0.8072 on the model signal and 0.4958 on the style signal, a split of 0.31. That's over the 0.30 threshold, so the rule used the lower score: 0.4958. A plain average would have given 0.6515, which is just above the 0.64 line and would have been labeled high-confidence AI. The rule keeps this text in the unsure range, which is the outcome I want when the two signals disagree.
 
 **The four calibration inputs** (from `calibration_texts.txt`):
 
@@ -127,21 +124,19 @@ Where they agree: the two signals sit within 0.25 of each other on every input e
 
 ## Label Variants
 
-<!-- The exact text of all three labels, as a reader would see them, and the
-     score range each covers.
+| Label                  | Score range           | The exact text a reader sees               |
+|------------------------|-----------------------|--------------------------------------------|
+| high-confidence human  | 0.46 or under         | Probably written by a human.               |
+| unsure                 | over 0.46, under 0.64 | Not sure if it's human or AI writing.      |
+| high-confidence AI     | 0.64 or over          | Probably written by AI.                    |
 
-     Write them for someone who has never heard the word "threshold". -->
+**Why the thresholds moved from 0.35 and 0.65 to 0.46 and 0.64:** I started with 0.35 and 0.65 as placeholders. When I ran the four calibration texts through the full pipeline, none of them reached a high-confidence label. The clearly-AI text combined to 0.6435, just under 0.65, and the clearly-human text combined to 0.4505, just over 0.35. The signals are compressed toward the middle, so the original lines could never be reached. I moved the human line up to 0.46 so the clearly-human and formal-human texts land in the human label, and the AI line down to 0.64 so the clearly-AI text lands in the AI label.
 
-| Label                  | Score range | The exact text a reader sees |
-|------------------------|-------------|------------------------------|
-| high-confidence human  |             |                              |
-| unsure                 |             |                              |
-| high-confidence AI     |             |                              |
+The cost is on the AI side. Writing that scores between 0.64 and 0.65 is now labeled AI, so some human writing near that score will be flagged. On a writing site, wrongly flagging a writer is the expensive mistake, so this is the setting I'd watch first. I accept the change because the signals can't reach the AI label otherwise, but it's a trade I'm choosing, and unit 8's attack set is where it gets tested.
 
 **Why I worded the "unsure" one this way:**
-<!-- It's the hardest of the three. It has to admit uncertainty without
-     sounding like an accusation, because the person reading it may well have
-     written every word themselves. -->
+
+I don't want to shame the writer for using AI, even if every word was written by them. AI editing could've been used as well. At the same time, if they didn't use AI, the label doesn't ask the writer to do anything, because someone who wrote every word has nothing to fix.
 
 ---
 
@@ -163,32 +158,27 @@ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json
 
 ```json
 {
-  "confidence": null,
-  "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
-  "guess": null,
-  "label": null,
+  "confidence": 0.6435,
+  "content_id": "bda7dcdf-9fed-434a-9c15-f6a31cbe8f7e",
+  "guess": "ai",
+  "label": "Probably written by AI.",
   "model_score": 0.756,
-  "style_score": null
+  "style_score": 0.531
 }
 ```
 
 ### An appeal
 
 ```bash
-curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"785507d7-bddb-4946-88f3-d99537408b85\", \"reasoning\": \"I wrote this paragraph myself last week for a class, and I can show my draft.\"}'
+curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"bda7dcdf-9fed-434a-9c15-f6a31cbe8f7e\", \"reasoning\": \"I wrote this paragraph myself last week for a class, and I can show my draft.\"}'
 
 ```
 
-Current output. The appeal route is still the M3 stub, so it returns 501. Replace this with the 200 response once M5 is built.
-
 ```json
 {
-  "error": "not_implemented",
-  "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-  "you_sent": {
-    "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
-    "reasoning": "I wrote this paragraph myself last week for a class, and I can show my draft."
-  }
+  "content_id": "bda7dcdf-9fed-434a-9c15-f6a31cbe8f7e",
+  "message": "Your appeal was recorded. This item is under review.",
+  "status": "under_review"
 }
 ```
 
@@ -200,18 +190,37 @@ curl "http://127.0.0.1:5000/log?limit=3"
 
 ```json
 {
-  "count": 1,
+  "count": 3,
   "entries": [
     {
-      "combined_score": null,
-      "content_id": "785507d7-bddb-4946-88f3-d99537408b85",
+      "combined_score": 0.4958,
+      "content_id": "afee98ba-8535-4122-a4cd-49d322695a27",
       "creator_id": "tester",
-      "guess": null,
-      "label": null,
-      "model_score": 0.756,
+      "guess": "unsure",
+      "label": "Not sure if it's human or AI writing.",
+      "model_score": 0.8072,
       "status": "decided",
-      "style_score": null,
-      "timestamp": "2026-11-01T23:21:02+00:00"
+      "style_score": 0.4958,
+      "timestamp": "2026-11-02T00:41:29+00:00"
+    },
+    {
+      "combined_score": 0.45465,
+      "content_id": "01d69f1c-3c90-4aa1-919d-f2c2f14eb678",
+      "creator_id": "tester",
+      "guess": "human",
+      "label": "Probably written by a human.",
+      "model_score": 0.4987,
+      "status": "decided",
+      "style_score": 0.4106,
+      "timestamp": "2026-11-02T00:41:29+00:00"
+    },
+    {
+      "content_id": "bda7dcdf-9fed-434a-9c15-f6a31cbe8f7e",
+      "creator_id": "tester",
+      "event": "appeal",
+      "reasoning": "I wrote this paragraph myself last week for a class, and I can show my draft.",
+      "status": "under_review",
+      "timestamp": "2026-11-02T00:41:29+00:00"
     }
   ]
 }

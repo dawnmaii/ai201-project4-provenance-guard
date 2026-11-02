@@ -18,8 +18,8 @@ doesn't, it's the service itself.
 Routes:
 
     POST /ping        the worked example. Already works. Don't edit it
-    POST /submit      ← YOU BUILD THIS (Milestone 3, 4, 5)
-    POST /appeal      ← YOU BUILD THIS (Milestone 5)
+    POST /submit      scores text, logs the decision, answers
+    POST /appeal      records a writer's appeal and marks it under_review
     GET  /log         the audit log. Already works
     GET  /health      is the service up, and is the model loaded
 """
@@ -160,7 +160,6 @@ def _error(error: str, message: str, status: int, **extra):
 def submit():
     """
     Take a piece of text, decide about it, log the decision, answer.
-    ← TODO — Milestones 3, 4 and 5
 
     Expects JSON:
         {"text": "...", "creator_id": "..."}
@@ -176,30 +175,9 @@ def submit():
     diagnostic you need to name a stage and a mechanism. You do not want to
     find that out after running the attack set.
 
-    ─────────────────────────────────────────────────────────────────────────
-    Build it in three passes. Do not skip ahead — the ordering is how you tell
-    a broken route from a broken signal.
+    Bad input (a non-object body, a missing or blank field, or text over the
+    cap) gets a 4xx JSON error before any scoring happens.
 
-    **Milestone 3 — the route answers.**
-      1. Return a hardcoded response. Confirm `curl` gets it back before you
-         add any logic at all.
-      2. Then pull `text` and `creator_id` out of the payload.
-      3. Then call ONE signal — `detector.model_signal(text)` — and put the
-         real number in. Leave confidence and label as placeholders.
-      4. Log every submission with `audit.log_decision(...)`. The content_id
-         matters: `/appeal` needs it, and a student who skips it rebuilds this
-         whole flow later.
-
-    **Milestone 4 — the second signal and the score.**
-      5. Add `stylometry.style_signal(text)`.
-      6. Combine them with `scoring.combine_signals(...)`.
-      7. Log BOTH signal scores alongside the combined one, and put them in the
-         response too. Next unit you can't diagnose anything without them.
-
-    **Milestone 5 — the label.**
-      8. `scoring.score_to_label(...)` and put the real label in the response.
-
-    ─────────────────────────────────────────────────────────────────────────
     Worth deciding early, because unit 8's attack set will decide it for you:
     what should this do when `text` is missing, empty, or enormous? A crash on
     a malformed input is one of the most common real failures there is.
@@ -237,20 +215,22 @@ def submit():
     style_score = stylometry.style_signal(text)
     combined_score = scoring.combine_signals(model_score, style_score)
 
-    # Placeholders until M5 (guess, confidence, label).
+    guess, label = scoring.score_to_label(combined_score)
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
+        guess=guess,
         model_score=model_score,
         style_score=style_score,
         combined_score=combined_score,
+        label=label,
         status="decided",
     )
     return jsonify({
         "content_id": content_id,
-        "guess": None,
-        "confidence": None,
-        "label": None,
+        "guess": guess,
+        "confidence": combined_score,
+        "label": label,
         "model_score": model_score,
         "style_score": style_score,
     })
@@ -259,15 +239,14 @@ def submit():
 @app.post("/appeal")
 def appeal():
     """
-    A writer says you got it wrong. ← TODO — Milestone 5
+    A writer says you got it wrong.
 
     Expects JSON:
         {"content_id": "...", "reasoning": "..."}
 
     Should:
-      1. Check the content_id actually exists — `audit.entries_for(id)` tells
-         you. A typo here fails silently and looks like a broken endpoint,
-         which is the single most common way this milestone eats an hour.
+      1. Check the content_id actually exists with `audit.entries_for(id)`.
+         An unknown id gets a 404.
       2. Record the appeal with `audit.log_appeal(...)`, which moves the item
          to `under_review`.
       3. Confirm to the writer. No automatic re-checking needed.
@@ -289,12 +268,13 @@ def appeal():
     if not audit.entries_for(content_id):
         return _error("content_not_found", "No submission with that content_id.", 404)
 
-    # TODO: delete this and build the route.
+    creator_id = audit.entries_for(content_id)[0]["creator_id"]
+    audit.log_appeal(content_id=content_id, creator_id=creator_id, reasoning=reasoning)
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-        "you_sent": payload,
-    }), 501
+        "content_id": content_id,
+        "status": "under_review",
+        "message": "Your appeal was recorded. This item is under review.",
+    })
 
 
 # ── Already works ─────────────────────────────────────────────────────────────

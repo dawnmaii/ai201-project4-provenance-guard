@@ -1,5 +1,5 @@
 """
-Signal two: the style signal. ← YOU BUILD THIS IN MILESTONE 4
+Signal two: the style signal.
 
 Signal one reads the text for meaning. This one measures it *as text* — the
 shape of it, without understanding a word.
@@ -17,9 +17,7 @@ toward even, mid-length sentences and a narrower band of vocabulary, because
 that's what "most likely next word" produces on average. Human writing is
 lumpier — a three-word sentence next to a forty-word one.
 
-⚠️ **The blind spot, which you have to name in Milestone 1.**
-
-This signal cannot read. It has no idea what the text says. Anything that
+⚠️ This signal cannot read. It has no idea what the text says. Anything that
 changes the shape without changing the substance moves it — adding typos,
 breaking up sentences, pasting in a quotation. That is a very cheap thing for
 someone to do on purpose, and unit 8's attack set will do it to you.
@@ -49,7 +47,7 @@ def words(text: str) -> list[str]:
 
 def sentence_length_spread(text: str) -> float:
     """
-    How much sentence length varies. ← TODO
+    How much sentence length varies.
 
     Returns:
         A float. Decide yourself what scale it's on and which direction means
@@ -75,7 +73,7 @@ def sentence_length_spread(text: str) -> float:
 
 def type_token_ratio(text: str) -> float:
     """
-    Unique words over total words. ← TODO
+    Unique words over total words.
 
     Returns:
         A float between 0 and 1. Higher means more varied vocabulary.
@@ -93,7 +91,7 @@ def type_token_ratio(text: str) -> float:
 
 def punctuation_density(text: str) -> float:
     """
-    How much punctuation, relative to length. ← TODO
+    How much punctuation, relative to length.
 
     Returns:
         A float. Whether you count all punctuation or only some kinds — commas,
@@ -112,7 +110,7 @@ def punctuation_density(text: str) -> float:
 
 def style_signal(text: str) -> float:
     """
-    The style signal as a 0–1 score. **Higher means more likely AI.** ← TODO
+    The style signal as a 0–1 score. **Higher means more likely AI.**
 
     Combine your three measures into one number. Same direction as
     `detector.model_signal`, so that `scoring.combine_signals` can treat them
@@ -157,4 +155,3 @@ if __name__ == "__main__":
     print(f"type_token_ratio         {type_token_ratio(text)}")
     print(f"punctuation_density      {punctuation_density(text)}")
     print(f"style_signal             {style_signal(text)}   (higher = more likely AI)")
-    print("\nAll zeros? These are stubs — Milestone 4 is where you build them.")
