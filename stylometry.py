@@ -64,8 +64,13 @@ def sentence_length_spread(text: str) -> float:
     `stdev` raises on fewer than two values. Decide what that should return
     before the attack set decides for you.
     """
-    # TODO: replace this
-    return 0.0
+    # Higher means more varied sentence lengths, which reads as more human.
+    lengths = [len(words(s)) for s in sentences(text)]
+    lengths = [n for n in lengths if n > 0]
+    if len(lengths) < 2:
+        # One sentence has no spread to measure, so it reads as flat (AI-ish).
+        return 0.0
+    return statistics.stdev(lengths) / statistics.mean(lengths)
 
 
 def type_token_ratio(text: str) -> float:
@@ -80,8 +85,10 @@ def type_token_ratio(text: str) -> float:
     directly comparable on it, and if your test inputs vary a lot in length,
     that alone can look like a signal.
     """
-    # TODO: replace this
-    return 0.0
+    tokens = words(text)
+    if not tokens:
+        return 0.0
+    return len(set(tokens)) / len(tokens)
 
 
 def punctuation_density(text: str) -> float:
@@ -94,8 +101,11 @@ def punctuation_density(text: str) -> float:
         more interesting than full stops, because they vary more between
         writers.
     """
-    # TODO: replace this
-    return 0.0
+    # Commas, semicolons, colons, and en/em dashes per word. Higher reads as human.
+    tokens = words(text)
+    if not tokens:
+        return 0.0
+    return len(re.findall("[,;:–—]", text)) / len(tokens)
 
 
 # ── Combining them ───────────────────────────────────────────────────────────
@@ -122,8 +132,16 @@ def style_signal(text: str) -> float:
     you trust it. Plain and ordinary, not formal: formal prose reads as *human*
     to signal one, and it is plain writing that gets accused.
     """
-    # TODO: replace this
-    return 0.5
+    if not words(text):
+        return 0.5  # no words, no evidence either way
+
+    # Each measure becomes an AI-leaning part from 0 to 1, then the parts are
+    # averaged. Scales are rough: a spread of 1.0 or more, a variety of 1.0,
+    # and 0.15 marks per word all count as clearly human-shaped.
+    spread_part = 1.0 - min(sentence_length_spread(text) / 1.0, 1.0)
+    variety_part = 1.0 - min(type_token_ratio(text), 1.0)
+    marks_part = 1.0 - min(punctuation_density(text) / 0.15, 1.0)
+    return round((spread_part + variety_part + marks_part) / 3, 4)
 
 
 if __name__ == "__main__":

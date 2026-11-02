@@ -229,15 +229,21 @@ def submit():
         return _error("missing_field", "creator_id is required.", 400)
 
     import detector
+    import scoring
+    import stylometry
 
     content_id = str(uuid.uuid4())
     model_score = detector.model_signal(text)
+    style_score = stylometry.style_signal(text)
+    combined_score = scoring.combine_signals(model_score, style_score)
 
-    # Placeholders until M4 (style_score, combined_score) and M5 (guess, label).
+    # Placeholders until M5 (guess, confidence, label).
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
         model_score=model_score,
+        style_score=style_score,
+        combined_score=combined_score,
         status="decided",
     )
     return jsonify({
@@ -246,7 +252,7 @@ def submit():
         "confidence": None,
         "label": None,
         "model_score": model_score,
-        "style_score": None,
+        "style_score": style_score,
     })
 
 

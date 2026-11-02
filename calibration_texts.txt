@@ -27,3 +27,11 @@ Score: 0.4265
 Regular exercise offers benefits that extend well beyond physical fitness, such as improved cardiovascular health and sleep quality, as well as stress reduction. Activities such as running, weightlifting, and cycling are accessible to most adults and require little specialized equipment. The best exercise routine is the one a person can keep doing, as many people find that a consistent routine makes these benefits easier to maintain over time.
 
 Score: 0.8072
+
+4. FORMAL HUMAN
+Source: written by me, stiff and academic, 4 to 8 sentences.
+
+When the war was finally over in 1975, Vietnam resolved to make a successful transition from a “centralized economy to a ‘socialist-oriented market [one]’” and become a more developed nation, implementing a series of free-market economic reforms starting in 1986 (Hayes, 2014, ¶6). These reforms were known as doi moi (literally, “new change”). Components of the doi moi policy include relaxing the various restrictions on private enterprise and freeing the markets to the common folk (Hayes, 2014, ¶6, ¶7). Doi moi has expanded the Vietnamese economy to great heights, which are quantified in the nation’s gross domestic product and percent change in its consumer price index. And these indicators suggest further economic expansion in the future, for they have remained consistent, if not improved in recent years.
+
+Score: ____
+

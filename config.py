@@ -63,6 +63,10 @@ MAX_TEXT_CHARS = 3000
 WEIGHT_MODEL_SIGNAL = 0.5
 WEIGHT_STYLE_SIGNAL = 0.5
 
+# When the two signals differ by this much or more, use the lower score
+# instead of the average, so a disagreement never pushes toward AI.
+DISAGREEMENT_THRESHOLD = 0.30
+
 
 # ─── Thresholds (Milestone 5) ────────────────────────────────────────────────
 # Where one label becomes another. Scores run 0.0 (confidently human) to 1.0

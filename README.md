@@ -99,9 +99,9 @@ A submission takes these steps:
 <!-- Write the rule in words, then give the numbers. What happens when the two
      signals disagree? -->
 
-**The rule:**
+**The rule:** Average the two signals with equal weight. If the two scores differ by 0.30 or more, use the lower score instead of the average. A disagreement never pushes a writer toward AI.
 
-**The numbers:**
+**The numbers:** Model signal weight 0.5, style signal weight 0.5. Disagreement threshold 0.30. All three live in `config.py`.
 
 **Where it lives:** `scoring.py::combine_signals`
 
@@ -109,6 +109,19 @@ A submission takes these steps:
      somewhere else, say where. -->
 
 **A case where my two signals split, and what my rule does with it:**
+
+The edited AI paragraph (section 3 of `calibration_texts.txt`) scored 0.8072 on the model signal and 0.4958 on the style signal, a split of 0.31. That's over the 0.30 threshold, so the rule used the lower score: 0.4958. A plain average would have given 0.6515, which is just above the 0.65 line and would have been labeled high-confidence AI. The rule keeps this text in the unsure range, which is the outcome I want when the two signals disagree.
+
+**The four calibration inputs** (from `calibration_texts.txt`):
+
+| Input | Model | Style | Split | Combined | Rule used |
+| --- | --- | --- | --- | --- | --- |
+| Clearly AI | 0.756 | 0.531 | 0.225 | 0.6435 | average |
+| Clearly human | 0.4265 | 0.4744 | 0.048 | 0.4505 | average |
+| Lightly edited AI | 0.8072 | 0.4958 | 0.311 | 0.4958 | lower score |
+| Formal human | 0.4987 | 0.4106 | 0.088 | 0.4546 | average |
+
+Where they agree: the two signals sit within 0.25 of each other on every input except the edited AI text, and the averages for clearly AI and clearly human stay on the same side of the middle. Where they split: the edited AI text, which the model reads as strongly AI and the style signal reads as mid-range. The formal human text is the one I was watching: the model puts it in the middle, not in the AI range, and the style signal reads it as more human than the clearly-human text. The clearly-AI and clearly-human texts combine to only about 0.19 apart, short of the 0.60 spread in criterion 2.
 
 ---
 
@@ -121,16 +134,14 @@ A submission takes these steps:
 
 | Label                  | Score range | The exact text a reader sees |
 |------------------------|-------------|------------------------------|
-| high-confidence human  |  |  |
-| unsure                 |  |  |
-| high-confidence AI     |  |  |
+| high-confidence human  |             |                              |
+| unsure                 |             |                              |
+| high-confidence AI     |             |                              |
 
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
      sounding like an accusation, because the person reading it may well have
      written every word themselves. -->
-
-
 
 ---
 
@@ -146,7 +157,7 @@ A submission takes these steps:
      diagnostics. -->
 
 ```bash
-$ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d '{\"text\": \"Regular exercise offers benefits that extend well beyond physical fitness. It supports cardiovascular health, improves sleep quality, and can reduce feelings of stress. Many people find that a consistent routine makes these benefits easier to maintain over time. Activities such as walking, swimming, and cycling are accessible to most adults and require little specialized equipment. Starting with modest goals and increasing gradually tends to produce the most sustainable results. Ultimately, the best exercise routine is the one a person can keep doing.\",    \"creator_id\": \"tester\"}'
+curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d '{\"text\": \"Regular exercise offers benefits that extend well beyond physical fitness. It supports cardiovascular health, improves sleep quality, and can reduce feelings of stress. Many people find that a consistent routine makes these benefits easier to maintain over time. Activities such as walking, swimming, and cycling are accessible to most adults and require little specialized equipment. Starting with modest goals and increasing gradually tends to produce the most sustainable results. Ultimately, the best exercise routine is the one a person can keep doing.\",    \"creator_id\": \"tester\"}'
 
 ```
 
@@ -164,7 +175,7 @@ $ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/js
 ### An appeal
 
 ```bash
-$ curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"785507d7-bddb-4946-88f3-d99537408b85\", \"reasoning\": \"I wrote this paragraph myself last week for a class, and I can show my draft.\"}'
+curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"785507d7-bddb-4946-88f3-d99537408b85\", \"reasoning\": \"I wrote this paragraph myself last week for a class, and I can show my draft.\"}'
 
 ```
 
@@ -184,7 +195,7 @@ Current output. The appeal route is still the M3 stub, so it returns 501. Replac
 ### What the log shows afterwards
 
 ```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+curl "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
@@ -273,12 +284,12 @@ whose work got caught by it:
 <!-- Your five criteria across three trials. `run_eval.py --label before`. -->
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
-|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+|-----------|--------|-------|-------|-------|---------|
+| 1.        |        |       |       |       |         |
+| 2.        |        |       |       |       |         |
+| 3.        |        |       |       |       |         |
+| 4.        |        |       |       |       |         |
+| 5.        |        |       |       |       |         |
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:

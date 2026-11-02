@@ -52,7 +52,9 @@ def combine_signals(model_score: float, style_score: float) -> float:
     The weights in config.py are placeholders. Change them, or ignore them and
     write a different rule.
     """
-    # TODO: replace this
+    # Rule from the README: a split of 0.30 or more uses the lower score.
+    if abs(model_score - style_score) >= config.DISAGREEMENT_THRESHOLD:
+        return min(model_score, style_score)
     return (
         config.WEIGHT_MODEL_SIGNAL * model_score
         + config.WEIGHT_STYLE_SIGNAL * style_score
