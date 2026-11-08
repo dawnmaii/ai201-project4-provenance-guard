@@ -234,24 +234,16 @@ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## Rate Limiting
 
-**My limits:** ___ per minute, ___ per day
+**My limits:** 5 per minute, 150 per day
 
-**Why those numbers and not others:**
-<!-- Think about two people: a real writer submitting their own work a few
-     times an hour, and a script sending a thousand variations to map your
-     thresholds. Your numbers have to be liveable for the first and hostile to
-     the second. -->
+**Why those numbers and not others:** The starter code had 10 requests per minute, 200 per day. I find it unrealistic that a single writer would submit 10 requests for their writing in a minute, so I set it to 5 to tighten the quality of the requests submitted. The higher the number of requests made per day, the more likely someone can use those requests to repeatedly submit writing that may only have been edited slightly. Human writing would stay under 5 requests/minute, assuming the writer takes time to resubmit because they actually look at their writing. 150/day allows for AI-assisted resubmissions via script while still encouraging the writer to edit closely (compared to 200, which is generous). One person can create many `creator_id`s to get around this limit, and the limiter won't catch it. The content signals don't reliably catch it either, so I've listed it under What's Still Broken.
 
-**What a caller counts as:** <!-- per address, or per creator_id? They fail
-differently — one script can look like a thousand callers, and one household
-can look like one. -->
+**What a caller counts as:** A caller should count as per `creator_id`. In the event multiple submissions come from the same IP address, it could be that multiple writers are using the same WiFi network, such as in a public space. At the very least, we can encourage writers to differentiate themselves and their submissions via `creator_id`s. Recommending writers to use different IP addresses would unnecessarily complicate things.
 
 **The run of status codes when I pushed past it:**
 
-<!-- python run_attacks.py --flood 15 -->
-
 ```text
-
+200 200 200 200 200 429 429 429 429 429 429 429 429 429 429
 ```
 
 ---

@@ -3,7 +3,6 @@ Settings for Provenance Guard.
 
 Everything you're likely to change lives here, at the top, on purpose.
 
-You'll edit the rate limits in unit 8.
 """
 
 import os
@@ -84,17 +83,20 @@ AI_THRESHOLD = 0.64
 # label is reachable. Unit 8's attack set is the real test of them.
 
 
-# ─── Rate limiting (UNIT 8) ──────────────────────────────────────────────────
-# Off in unit 7. You turn it on and choose the numbers in unit 8, Milestone 1.
+# ─── Rate limiting ──────────────────────────────────────────────────
 #
 # Think about two people: a real writer submitting their own work a few times
 # an hour, and a script sending a thousand variations to map your thresholds.
 # Your README has to say why your numbers and not others.
 
-RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "0") == "1"
+RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "1") == "1"
 
-RATE_LIMIT_PER_MINUTE = 10
-RATE_LIMIT_PER_DAY = 200
+# A real writer submits a few pieces an hour, so 5 a minute never bites them.
+# A script sending variations hits 5 a minute within seconds. The daily cap
+# only binds after about 30 minutes of sustained flooding, so the per-minute
+# limit is the one doing the work.
+RATE_LIMIT_PER_MINUTE = 5
+RATE_LIMIT_PER_DAY = 150
 
 # Flask-Limiter warns loudly without this. In-memory is right for one laptop
 # and wrong for anything real — a restart forgets every count, and two copies

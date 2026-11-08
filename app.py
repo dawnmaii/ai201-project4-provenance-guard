@@ -151,12 +151,24 @@ def health():
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
 def _error(error: str, message: str, status: int, **extra):
-    """One shape for every error this service returns: {"error", "message", ...}."""
+    """
+    One shape for every error this service returns: {"error", "message", ...}.
+
+    Every refusal is also written to the audit log, so a flood of bad requests
+    leaves a trace instead of just a quiet afternoon.
+    """
+    payload = request.get_json(silent=True)
+    creator_id = payload.get("creator_id") if isinstance(payload, dict) else None
+    audit.log_rejection(
+        creator_id=creator_id if isinstance(creator_id, str) else "unknown",
+        reason=error,
+        route=request.path,
+    )
     return jsonify({"error": error, "message": message, **extra}), status
 
 
 @app.post("/submit")
-# @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
+@limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
     """
     Take a piece of text, decide about it, log the decision, answer.
