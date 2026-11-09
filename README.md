@@ -228,8 +228,6 @@ curl "http://127.0.0.1:5000/log?limit=3"
 - *What came back:* A proposal to move the thresholds to 0.46 and 0.64, after every calibration text landed in the unsure range.
 - *What I changed:* I accepted the move and wrote the trade-off into the README myself, including the cost of flagging writing that scores near 0.64.
 
-<!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
-
 ---
 
 ## Rate Limiting
@@ -250,19 +248,82 @@ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## Attack Run — Before
 
-<!-- Every attack with its outcome and a held-or-broke mark.
-     `run_attacks.py --label before` produces the table. -->
+| ID | Family | Status | Guess | Score | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| EV01 | evasion | 200 | human | 0.164 | BROKE |
+| EV02 | evasion | 200 | unsure | 0.482 | HELD |
+| EV03 | evasion | 200 | unsure | 0.577 | HELD |
+| EV04 | evasion | 200 | unsure | 0.593 | HELD |
+| EV05 | evasion | 200 | human | 0.352 | BROKE |
+| EV06 | evasion | 200 | human | 0.458 | BROKE |
+| EV07 | evasion | 200 | unsure | 0.498 | HELD |
+| EV08 | evasion | 200 | human | 0.245 | BROKE |
+| EV09 | evasion | 200 | unsure | 0.583 | HELD |
+| EV10 | evasion | 200 | ai | 0.871 | HELD |
+| FP01 | false_positive | 200 | unsure | 0.593 | HELD |
+| FP02 | false_positive | 200 | ai | 0.696 | BROKE |
+| FP03 | false_positive | 200 | ai | 0.727 | BROKE |
+| FP04 | false_positive | 200 | ai | 0.704 | BROKE |
+| FP05 | false_positive | 200 | ai | 0.725 | BROKE |
+| FP06 | false_positive | 200 | unsure | 0.547 | HELD |
+| FP07 | false_positive | 200 | unsure | 0.528 | HELD |
+| FP08 | false_positive | 200 | human | 0.422 | HELD |
+| PI01 | prompt_injection | 200 | unsure | 0.465 | HELD |
+| PI02 | prompt_injection | 200 | human | 0.285 | BROKE |
+| PI03 | prompt_injection | 200 | unsure | 0.568 | HELD |
+| PI04 | prompt_injection | 200 | unsure | 0.496 | HELD |
+| PI05 | prompt_injection | 200 | human | 0.187 | BROKE |
+| PI06 | prompt_injection | 200 | unsure | 0.567 | HELD |
+| MF01 | malformed | 400 | — | — | HELD |
+| MF02 | malformed | 500 | — | — | BROKE |
+| MF03 | malformed | 200 | human | 0.000 | BROKE |
+| MF04 | malformed | 200 | human | 0.011 | BROKE |
+| MF05 | malformed | 413 | — | — | HELD |
+| MF06 | malformed | 200 | unsure | 0.500 | HELD |
+| MF07 | malformed | 200 | unsure | 0.500 | HELD |
+| MF08 | malformed | 413 | — | — | HELD |
+| RQ01 | malformed | 400 | — | — | HELD |
+| RQ02 | malformed | 400 | — | — | HELD |
+| RQ03 | malformed | 400 | — | — | HELD |
+| RQ04 | malformed | 400 | — | — | HELD |
+| RQ05 | malformed | 400 | — | — | HELD |
+| RQ06 | malformed | 400 | — | — | HELD |
+| RQ07 | malformed | 400 | — | — | HELD |
+| RQ08 | malformed | 400 | — | — | HELD |
+| RQ09 | malformed | 400 | — | — | HELD |
+| RQ10 | malformed | 429 | — | — | HELD |
+| RQ11 | malformed | 429 | — | — | HELD |
+| RQ12 | malformed | 400 | — | — | HELD |
+| FL01_01 | flood_same_creator | 200 | human | 0.029 | HELD |
+| FL01_02 | flood_same_creator | 200 | human | 0.029 | HELD |
+| FL01_03 | flood_same_creator | 200 | human | 0.029 | HELD |
+| FL01_04 | flood_same_creator | 200 | human | 0.029 | HELD |
+| FL01_05 | flood_same_creator | 200 | human | 0.029 | HELD |
+| FL01_06 | flood_same_creator | 429 | — | — | HELD |
+| FL01_07 | flood_same_creator | 429 | — | — | HELD |
+| FL01_08 | flood_same_creator | 429 | — | — | HELD |
+| FL01_09 | flood_same_creator | 429 | — | — | HELD |
+| FL01_10 | flood_same_creator | 429 | — | — | HELD |
+| FL01_11 | flood_same_creator | 429 | — | — | HELD |
+| FL01_12 | flood_same_creator | 429 | — | — | HELD |
 
 ### Ten audit log entries from the run
 
-<!-- Choose entries that show the interesting failures, not the ten easiest. -->
-
 ```json
-
+{"timestamp": "2026-11-09T04:23:07+00:00", "content_id": "a76f88fc-6728-4d16-8114-41b8609a6f1d", "creator_id": "attacker_EV01", "guess": "human", "model_score": 0.1635, "style_score": 0.5778, "combined_score": 0.1635, "label": "Probably written by a human.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:07+00:00", "content_id": "b6864b94-db85-4d40-b08e-5169cb7bfb1b", "creator_id": "attacker_EV05", "guess": "human", "model_score": 0.3212, "style_score": 0.3833, "combined_score": 0.35224999999999995, "label": "Probably written by a human.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:09+00:00", "content_id": "08285ef5-d4de-49d1-be86-fd5b36d5e02a", "creator_id": "attacker_FP02", "guess": "ai", "model_score": 0.7387, "style_score": 0.6538, "combined_score": 0.69625, "label": "Probably written by AI.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:09+00:00", "content_id": "715fff45-3989-4802-bddb-c2649da6b38d", "creator_id": "attacker_FP03", "guess": "ai", "model_score": 0.8051, "style_score": 0.6496, "combined_score": 0.7273499999999999, "label": "Probably written by AI.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:09+00:00", "content_id": "7e00fdc9-1709-488a-8fb0-cafef030ea3a", "creator_id": "attacker_FP04", "guess": "ai", "model_score": 0.8329, "style_score": 0.5755, "combined_score": 0.7041999999999999, "label": "Probably written by AI.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:09+00:00", "content_id": "3420dd6f-55ff-4e72-b1f3-edb026178ef8", "creator_id": "attacker_FP05", "guess": "ai", "model_score": 0.8005, "style_score": 0.649, "combined_score": 0.72475, "label": "Probably written by AI.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:10+00:00", "content_id": "49758898-e3a9-4f30-977d-c4cae259d6a1", "creator_id": "attacker_PI05", "guess": "human", "model_score": 0.6401, "style_score": 0.1873, "combined_score": 0.1873, "label": "Probably written by a human.", "status": "decided"}
+{"timestamp": "2026-11-09T04:23:11+00:00", "creator_id": "unknown", "event": "rejected", "status": "rejected", "reason": "missing_field", "route": "/submit"}
+{"timestamp": "2026-11-09T04:23:12+00:00", "creator_id": "unknown", "event": "rejected", "status": "rejected", "reason": "rate_limited", "limit": "5 per 1 minute"}
+{"timestamp": "2026-11-09T04:23:12+00:00", "creator_id": "attacker_flood", "event": "rejected", "status": "rejected", "reason": "rate_limited", "limit": "5 per 1 minute"}
 ```
 
 **The single worst outcome** — the one I'd least want to explain to a writer
-whose work got caught by it:
+whose work got caught by it: FP03. A non-native English speaker writing carefully shouldn't have their writing labeled as AI. Quite discriminatory.
 
 ---
 
