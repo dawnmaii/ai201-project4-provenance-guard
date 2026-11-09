@@ -332,35 +332,193 @@ whose work got caught by it: FP03. A non-native English speaker writing carefull
 <!-- Your five criteria across three trials. `run_eval.py --label before`. -->
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
-|-----------|--------|-------|-------|-------|---------|
-| 1.        |        |       |       |       |         |
-| 2.        |        |       |       |       |         |
-| 3.        |        |       |       |       |         |
-| 4.        |        |       |       |       |         |
-| 5.        |        |       |       |       |         |
+| ----------- | -------- | ------- | ------- | ------- | --------- |
+| 1. My own writing | at most 3 of 10 labeled AI | 5/10 | 5/10 | 5/10 | MISSED |
+| 2. Score spread | lowest AI minus highest human at least 0.60 | 0.046 | 0.046 | 0.046 | MISSED |
+| 3. Label coverage | all 8 labeled as expected | 2/8 | 2/8 | 2/8 | MISSED |
+| 4. Appeal path | 10 of 10 appeals set under_review and logged | 10/10 (manual) | — | — | MET |
+| 5. Bad input | every bad-input request returns the expected code | 6/6 | 6/6 | 5/6 | MISSED |
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
-```json
+Source: `results/run_2026-11-09_1632_before.md`, produced by `run_eval.py::main`. Score spread, trial 1.
 
+```json
+[
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.60015,
+    "model_score": 0.6503,
+    "style_score": 0.55,
+    "label": "Not sure if it's human or AI writing.",
+    "sent": "Remote work has changed how many organizations think about productivit"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5577,
+    "model_score": 0.6352,
+    "style_score": 0.4802,
+    "label": "Not sure if it's human or AI writing.",
+    "sent": "Water conservation is an important part of managing shared resources. "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6101,
+    "model_score": 0.7379,
+    "style_score": 0.4823,
+    "label": "Not sure if it's human or AI writing.",
+    "sent": "Learning a second language requires consistent practice and patience. "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.50325,
+    "model_score": 0.4502,
+    "style_score": 0.5563,
+    "label": "Not sure if it's human or AI writing.",
+    "sent": "First full week of work in the office! I met my peers in the cohort as"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.38380000000000003,
+    "model_score": 0.3379,
+    "style_score": 0.4297,
+    "label": "Probably written by a human.",
+    "sent": "Still a hard week but nevertheless rewarding; I met many more new peop"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5113,
+    "model_score": 0.5212,
+    "style_score": 0.5014,
+    "label": "Not sure if it's human or AI writing.",
+    "sent": "I like to think of letter writing as sending a message to space, looki"
+  }
+]
 ```
 
 ### Diagnoses
 
-<!-- For each miss AND each broken attack: the stage and the mechanism.
+Each entry names the stage and the mechanism. The stage is one of: route,
+signal one, signal two, combining rule, or label mapping.
 
-     Your service has five stages: the route, signal one, signal two, the
-     combining rule, and the label mapping.
+#### Criteria
 
-     Not a diagnosis:  "The evasion attacks got through."
-     A diagnosis:      "Four evasion inputs got through. All four had typos
-                        added to AI-generated text. My second signal measures
-                        word variety, and typos raise word variety — so it read
-                        them as more human. My combining rule weights that
-                        signal at 0.6, so it dragged the whole score down."
+#### Criterion 1: my own writing flagged AI, MISSED
 
-     Look for a pattern. Five failures on one signal is one problem, not five. -->
+- **Evidence:** 5 of 10 labeled AI in every trial (target: at most 3)
+- **Stage:** signal 1
+- **Mechanism:** the model finds these pieces predictable, which is the blind spot the README already names for formal writing. The combining rule averages that high score with a mid-range style score, so the combined score lands in the AI range. One piece scored 0.6436, and the threshold change from 0.65 to 0.64 is what moved it into AI. Under the old threshold it would have been unsure.
+
+#### Criterion 2: score spread between groups, MISSED
+
+- **Evidence:** lowest AI score 0.5577, highest human score 0.5113, gap 0.046 in every trial (target: at least 0.60)
+- **Stage:** signal 2 through the combining rule
+- **Mechanism:** the style scores barely separate the groups. The AI texts were 0.48 to 0.55, and the human texts were 0.43 to 0.56, so the style signal sits near 0.5 for everything. The model signal does separate them somewhat, with a gap of about 0.11. Averaging that with the flat style score halves the separation, so the combined gap shrinks to 0.046.
+
+#### Criterion 3: label coverage, MISSED
+
+- **Evidence:** 2 of 8 labeled as expected in every trial (target: all 8)
+- **Stage:** signal 1
+- **Mechanism:** the model scores these AI texts around 0.54, well below the 0.64 AI line, and the style scores are below 0.5. The combined score therefore lands in the middle, where the mapping says unsure. One human text scored 0.62 and came back unsure, which is the model reading it as more AI-like than its style suggests. The AI texts in criterion 2 scored higher on the model, so the same kind of text varied a lot between groups. That's worth a question in your diagnosis.
+
+#### Criterion 5: bad input status codes, MISSED
+
+- **Evidence:** 6 of 6 in trials 1 and 2; 5 of 6 in trial 3, where the blank creator_id returned 429 (target: every bad-input request)
+- **Stage:** the rate limiter for the route
+- **Mechanism:** a blank `creator_id` falls back to counting against the caller's IP address. The limiter runs before the route's validation, so by the time that request arrived, the address had already used its five requests for the minute. The limiter answered with 429, and the validation never ran. The request with no `creator_id` also counted against the address, and requests that fail validation count too. Without that, a reader can't see why the blank-ID request was the sixth.
+
+#### Broken attacks
+
+#### EV01: evasion, typos raise word variety
+
+- **Evidence:** status 200, guess human, model 0.1635, style 0.5778, combined 0.1635, labeled "Probably written by a human."
+- **Stage:** signal 1 through the combining rule
+- **Mechanism:** Typos made the text less predictable to the model (0.16), so it read as human. The style signal read it as AI-leaning (0.58). The gap was 0.41, so the rule took the lower score. The attack targeted signal two, but the model drove the result.
+
+#### EV05: evasion, heavy human editing pass
+
+- **Evidence:** status 200, guess human, model 0.3212, style 0.3833, combined 0.3522, labeled "Probably written by a human."
+- **Stage:** signal 1 and signal 2
+- **Mechanism:** The edits made the phrasing less predictable to the language model. Word choice affected what the model read, which lowered its score, and mixing sentence lengths made the text more uneven, which lowered the style score. The model (0.32) and the style signal (0.38) both read the edited text as human. Those two scores were 0.06 apart, under the 0.30 threshold, so the rule averaged them to 0.35 instead of taking the lower one. Editing by hand is the blind spot the README names, and here the style signal misses it too.
+
+#### EV06: evasion, one very long and one very short sentence
+
+- **Evidence:** status 200, guess human, model 0.5727, style 0.3442, combined 0.4585, labeled "Probably written by a human."
+- **Stage:** signal 2
+- **Mechanism:** The uneven sentence lengths raised the spread measure, so the style score dropped to 0.34. The model was in the middle (0.57). The gap was under 0.30, so the average (0.4585) landed just under the human line.
+
+#### EV08: evasion, text below the token window
+
+- **Evidence:** status 200, guess human, model 0.2452, style 0.5724, combined 0.2452, labeled "Probably written by a human."
+- **Stage:** signal 1
+- **Mechanism:** The model gets too little context from a very short text, so its score (0.25) fell into the human range. The gap to the style score was over 0.30, so the lower score was used.
+
+#### FP02: false positive, formal register
+
+- **Evidence:** status 200, guess ai, model 0.7387, style 0.6538, combined 0.6963, labeled "Probably written by AI."
+- **Stage:** signal 1, signal 2 added to it
+- **Mechanism:** Formal prose is predictable (model 0.74) and even in shape (style 0.65), so both read it as AI. The average stayed in the AI range at 0.70.
+
+#### FP03: false positive, non-native English speaker
+
+- **Evidence:** status 200, guess ai, model 0.8051, style 0.6496, combined 0.7273, labeled "Probably written by AI."
+- **Stage:** signal 1
+- **Mechanism:** Simple, regular sentences and vocabulary make the text predictable (model 0.81), which is one of the highest scores in the group. The style signal leaned the same way (0.65).
+
+#### FP04: false positive, student essay to a rubric
+
+- **Evidence:** status 200, guess ai, model 0.8329, style 0.5755, combined 0.7042, labeled "Probably written by AI."
+- **Stage:** signal 1
+- **Mechanism:** Repeated structure and standard phrasing make the text predictable (model 0.83). The style score (0.58) was milder, so the average still landed at 0.70.
+
+#### FP05: false positive, technical documentation
+
+- **Evidence:** status 200, guess ai, model 0.8005, style 0.6490, combined 0.7248, labeled "Probably written by AI."
+- **Stage:** signal 1
+- **Mechanism:** Standard terms and phrasing make it predictable (model 0.80), and the style score (0.65) was similar to FP02.
+
+#### PI02: prompt injection, instruction disguised as a system message
+
+- **Evidence:** status 200, guess human, model 0.2044, style 0.3654, combined 0.2849, labeled "Probably written by a human."
+- **Stage:** signal 1
+- **Mechanism:** The service doesn't follow instructions, so the label didn't come from the injection. The unusual "SYSTEM:" text read as less predictable (model 0.20), and the average (0.28) landed in human. The attacker's goal was met by accident.
+
+#### PI05: prompt injection, attempt to inject into the audit log
+
+- **Evidence:** status 200, guess human, model 0.6401, style 0.1873, combined 0.1873, labeled "Probably written by a human."
+- **Stage:** the combining rule
+- **Mechanism:** The model gave 0.64 and the style signal gave 0.19. The gap was 0.45, so the rule took the lower score and labeled it human. The audit log doesn't store the input text, so the injection didn't reach the log.
+
+#### MF02: malformed, text is a single character
+
+- **Evidence:** status 500, the response is an HTML error page with "ValueError: Text is too short to score"
+- **Stage:** signal 1 and the route
+- **Mechanism:** The detector raises an error on text that's too short to score. The route has no check for that, so Flask returned an HTML error page with a 500 status.
+
+#### MF03: malformed, text is control characters
+
+- **Evidence:** status 200, guess human, model 0.0, style 0.6667, combined 0.0, labeled "Probably written by a human."
+- **Stage:** signal 1
+- **Mechanism:** After stripping, almost nothing is left. The model's score was 0.0, and the rule passed that through as a confident human label on no real content.
+
+#### MF04: malformed, text is only punctuation
+
+- **Evidence:** status 200, guess human, model 0.0112, style 0.5, combined 0.0112, labeled "Probably written by a human."
+- **Stage:** signal 1
+- **Mechanism:** Same as MF03: there are no words to score, and the model's score (0.01) gave a confident human label.
+
+#### Pattern
+
+Signal 1 accounts for the most failures, responsible for 10/13 broken attacks and 2/4 criteria tested. Signal 1 measures how predictable the text is to the model. Text that's predictable to the model reads as AI, and text that's short, unusual, or unpredictable reads as human. Signal 1 gave the most extreme readings (very high on predictable text, very low on short or odd text), therefore signal 1's extreme score decides the result, either by winning a disagreement or by dominating an average.
+
+5 of the failures don't fit this pattern. Criterion 5 came from the route. EV05 came from both signals. Criterion 2 came from signal two. The style scores were close to 0.5 for every text, so the gap collapsed. EV06 also came from signal 2. The uneven sentence lengths lowered the style score. And finally, PI05 came from the combining rule. The gap was large, so the rule took the lower score, and the style score was the lower one.
 
 ---
 
