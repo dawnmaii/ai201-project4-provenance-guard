@@ -15,13 +15,8 @@ lumpier — a three-word sentence next to a forty-word one.
 
 ⚠️ This signal cannot read. It has no idea what the text says. Anything that
 changes the shape without changing the substance moves it — adding typos,
-breaking up sentences, pasting in a quotation. That is a very cheap thing for
-someone to do on purpose, and unit 8's attack set will do it to you.
+breaking up sentences, pasting in a quotation.
 
-Build each function on its own and call it from a terminal before you wire
-anything together:
-
-    python stylometry.py "some text to look at"
 """
 
 import re
@@ -39,8 +34,6 @@ def words(text: str) -> list[str]:
     return re.findall(r"[a-z0-9']+", text.lower())
 
 
-# ── The three measures — YOU BUILD THESE ─────────────────────────────────────
-
 def sentence_length_spread(text: str) -> float:
     """
     How much sentence length varies.
@@ -55,8 +48,8 @@ def sentence_length_spread(text: str) -> float:
     comparable. `statistics.stdev` is imported for you.
 
     Watch the edge case: a one-sentence submission has no spread at all, and
-    `stdev` raises on fewer than two values. Decide what that should return
-    before the attack set decides for you.
+    `stdev` raises on fewer than two values. 
+    
     """
     # Higher means more varied sentence lengths, which reads as more human.
     lengths = [len(words(s)) for s in sentences(text)]
@@ -112,15 +105,7 @@ def style_signal(text: str) -> float:
     `detector.model_signal`, so that `scoring.combine_signals` can treat them
     the same way — if one of your signals runs backwards, everything above it
     is wrong in a way that's hard to see.
-
-    Two things to decide and write down:
-
-      1. Which direction each measure points. Low spread means more AI-ish, so
-         it needs flipping. Work out which of your three need that.
-      2. How to get each onto a comparable scale. A raw type-token ratio sits
-         between 0 and 1; a raw punctuation count doesn't. Adding them
-         unscaled means whichever has the bigger numbers wins by default.
-         
+    
     """
     if not words(text):
         return 0.5  # no words, no evidence either way

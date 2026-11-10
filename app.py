@@ -10,14 +10,9 @@ Then, in another terminal:
       -H "Content-Type: application/json" \
       -d '{"message": "hello"}'
 
-That's the example route. It works right now, before you've written anything.
-**Leave it alone** — it's your control. When something breaks later, check that
-`/ping` still answers: if it does, the problem is in your handler; if it
-doesn't, it's the service itself.
-
 Routes:
 
-    POST /ping        the worked example. Already works. Don't edit it
+    POST /ping        the worked example.
     POST /submit      scores text, logs the decision, answers
     POST /appeal      records a writer's appeal and marks it under_review
     GET  /log         the audit log. Already works
@@ -34,16 +29,7 @@ import config
 app = Flask(__name__)
 
 
-# ── Rate limiting — UNIT 8 ────────────────────────────────────────────────────
-# Off until you turn it on. In unit 8, Milestone 1:
-#
-#   1. Set RATE_LIMITING_ENABLED = True in config.py (or AI201_RATE_LIMITS=1)
-#   2. Choose your numbers there
-#   3. Uncomment the @limiter.limit(...) line on /submit below
-#
-# The order doesn't matter. While limiting is off, that decorator is a no-op
-# that quietly does nothing, so uncommenting it early costs you nothing — but
-# it also means no 429 until you've done step 1.
+# ─ Rate limiting —
 #
 # The storage backend is preconfigured, which stops Flask-Limiter printing a
 # warning on every start. In-memory is right for one laptop and wrong for
@@ -71,10 +57,6 @@ if config.RATE_LIMITING_ENABLED:
         """
         Who a request counts against.
 
-        Falling back to the caller's address is the easy version. Unit 8's
-        stretch asks about per-creator limits instead — and the difference
-        matters: one script can look like a thousand callers, and one household
-        can look like one.
         """
         payload = request.get_json(silent=True)
         # A body that parses as JSON but isn't an object — a bare list or
@@ -115,8 +97,6 @@ if config.RATE_LIMITING_ENABLED:
         }), 429
 
 
-# ── The worked example. Already works. Don't edit. ────────────────────────────
-
 @app.post("/ping")
 def ping():
     """
@@ -148,8 +128,6 @@ def health():
     })
 
 
-# ── YOU BUILD THIS ────────────────────────────────────────────────────────────
-
 def _error(error: str, message: str, status: int, **extra):
     """
     One shape for every error this service returns: {"error", "message", ...}.
@@ -180,19 +158,9 @@ def submit():
         {"content_id": "...", "guess": "...", "confidence": 0.0, "label": "...",
          "model_score": 0.0, "style_score": 0.0}
 
-    ⚠️ **Both signal scores go in the response, not just the log.** Unit 8's
-    `run_attacks.py` and `run_eval.py` read `model_score` and `style_score`
-    straight off this response and put them in your reports. Leave them out and
-    every row of next unit's evidence says `null` — which is exactly the
-    diagnostic you need to name a stage and a mechanism. You do not want to
-    find that out after running the attack set.
-
     Bad input (a non-object body, a missing or blank field, or text over the
     cap) gets a 4xx JSON error before any scoring happens.
 
-    Worth deciding early, because unit 8's attack set will decide it for you:
-    what should this do when `text` is missing, empty, or enormous? A crash on
-    a malformed input is one of the most common real failures there is.
     """
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
@@ -298,8 +266,6 @@ def get_log():
 
         curl "http://127.0.0.1:5000/log?limit=10"
 
-    You need this in unit 8 to paste entries into your README, and you need it
-    now to see whether your logging is actually working.
     """
     limit = request.args.get("limit", type=int)
     entries = audit.read_entries(limit=limit)

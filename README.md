@@ -228,6 +228,18 @@ curl "http://127.0.0.1:5000/log?limit=3"
 - *What came back:* A proposal to move the thresholds to 0.46 and 0.64, after every calibration text landed in the unsure range.
 - *What I changed:* I accepted the move and wrote the trade-off into the README myself, including the cost of flagging writing that scores near 0.64.
 
+### Moment 3: The steepness change
+
+- *What I asked for:* which setting in signal one would help criterion 2.
+- *What came back:* a suggestion to raise the steepness from 1.6 to 3.0, with the trade-off that formal human writing would move toward AI.
+- *What I changed:* I accepted the change, and I didn't follow the criterion 2 diagnosis to signal two. The result helped criterion 1, made criterion 2 worse, and pushed three false positives up in confidence.
+
+### Moment 4: The 429 explanation
+
+- *What I asked for:* why the blank-`creator_id` request returned 429 in trial 3.
+- *What came back:* an explanation that the blank ID fell back to the address, and the address had used its five requests.
+- *What I changed:* I checked the audit log, which showed the request with no creator_id also counted against the address, making the blank-ID request the sixth. I corrected the mechanism in the README to include that.
+
 ---
 
 ## Rate Limiting
@@ -328,8 +340,6 @@ whose work got caught by it: FP03. A non-native English speaker writing carefull
 ---
 
 ## Run Log and Verdicts
-
-<!-- Your five criteria across three trials. `run_eval.py --label before`. -->
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 | ----------- | -------- | ------- | ------- | ------- | --------- |
@@ -645,25 +655,6 @@ Adjusting the steepness for signal 1 helped criterion 1, but not criterion 2 or 
 **The trade I'd make if this ran for real:**
 
 If this ran for real, I'd lean toward fewer wrongful accusations, because I'd rather risk more AI-based writings coming through as human than accusing a genuine human-written piece as AI. The people who pay for that are human writers who compete with unlabeled AI text, and readers who rely on the labels to avoid AI-assisted pieces.
-
-<!-- ═════════════════════════════════════════════════════════════════════
-
-     SUBMISSION CHECKLIST — unit 8
-
-       [ ] Rate limiting on /submit, with your numbers justified
-       [ ] The pasted run of status codes showing 429
-       [ ] Audit log with all nine fields, recording rejections too
-       [ ] The attack set run IN FULL, every input with an outcome
-       [ ] Ten audit log entries pasted as text
-       [ ] Five criteria across three trials
-       [ ] A diagnosis for every miss and every broken attack — stage AND mechanism
-       [ ] One improvement, with Attack Run — After
-       [ ] What's Still Broken, including the production trade
-       [ ] At least four new commits
-       [ ] The SAME repository URL as last unit
-
-     Do not delete and recreate this repository.
-     ═════════════════════════════════════════════════════════════════════ -->
 
 ---
 

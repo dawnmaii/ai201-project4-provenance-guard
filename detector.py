@@ -18,7 +18,7 @@ that into a 0–1 score where **higher means more likely AI**.
 
 Everything runs locally. No account, no key, no card.
 
-⚠️ **The blind spot, which you have to name in Milestone 1.**
+⚠️ **The blind spot**
 
 Predictability is not the same thing as authorship. What this signal actually
 rewards is **common words in short, ordinary sentences** — and plenty of real
@@ -32,13 +32,6 @@ The reverse trips people up too: dense, ornate prose full of rare words often
 scores as *human* on this signal, because rare words are exactly what a
 language model fails to predict. Formality on its own doesn't decide it.
 
-So the writers this signal is most likely to accuse are the ones with the
-least room to argue back. That is structural rather than a bug you can fix,
-and it is the person Milestone 1 asks you to follow through your service.
-
-Don't take that on trust — it's a claim you can check. Milestone 4 has you run
-four calibration inputs. Add a plainly-written human paragraph to them and see
-for yourself where it lands.
 """
 
 import math
@@ -121,9 +114,6 @@ def model_signal(text: str) -> float:
     onto 0–1 rather than clipped. The midpoint below is the perplexity that
     maps to 0.5 — text this surprising is a coin flip.
 
-    You may want to move that midpoint once you've run the four calibration
-    inputs in Milestone 4 and seen what your own text actually scores. If you
-    do, say so in your README: it's a scoring decision, not a detail.
     """
     ppl = perplexity(text)
 
