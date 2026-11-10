@@ -128,7 +128,7 @@ def model_signal(text: str) -> float:
     ppl = perplexity(text)
 
     midpoint = 45.0    # perplexity that scores 0.5
-    steepness = 1.6    # how sharply the score moves either side of it
+    steepness = 3.0    # how sharply the score moves either side of it
 
     # Logistic on log-perplexity. Low perplexity -> high AI score.
     score = 1.0 / (1.0 + (ppl / midpoint) ** steepness)

@@ -524,30 +524,127 @@ Signal 1 accounts for the most failures, responsible for 10/13 broken attacks an
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** Steepness for signal 1, from 1.6 to 3.0 in `detector.py`
 
-**Which diagnosis pointed at it:**
+**Which diagnosis pointed at it:** The criterion 2 diagnosis; it did point at signal 2, but I decided to change signal 1 because it was the signal that separated the two groups.
 
 ### Attack Run — After
 
-<!-- Same format. `run_attacks.py --label after` -->
+| ID | Family | Status | Guess | Score | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| EV01 | evasion | 200 | human | 0.045 | BROKE |
+| EV02 | evasion | 200 | human | 0.369 | BROKE |
+| EV03 | evasion | 200 | unsure | 0.637 | HELD |
+| EV04 | evasion | 200 | unsure | 0.637 | HELD |
+| EV05 | evasion | 200 | human | 0.290 | BROKE |
+| EV06 | evasion | 200 | unsure | 0.489 | HELD |
+| EV07 | evasion | 200 | unsure | 0.533 | HELD |
+| EV08 | evasion | 200 | human | 0.108 | BROKE |
+| EV09 | evasion | 200 | unsure | 0.462 | HELD |
+| EV10 | evasion | 200 | ai | 0.881 | HELD |
+| FP01 | false_positive | 200 | unsure | 0.639 | HELD |
+| FP02 | false_positive | 200 | ai | 0.765 | BROKE |
+| FP03 | false_positive | 200 | ai | 0.792 | BROKE |
+| FP04 | false_positive | 200 | unsure | 0.576 | HELD |
+| FP05 | false_positive | 200 | ai | 0.790 | BROKE |
+| FP06 | false_positive | 200 | unsure | 0.547 | HELD |
+| FP07 | false_positive | 200 | unsure | 0.528 | HELD |
+| FP08 | false_positive | 200 | human | 0.199 | HELD |
+| PI01 | prompt_injection | 200 | human | 0.449 | BROKE |
+| PI02 | prompt_injection | 200 | human | 0.219 | BROKE |
+| PI03 | prompt_injection | 200 | unsure | 0.607 | HELD |
+| PI04 | prompt_injection | 200 | unsure | 0.496 | HELD |
+| PI05 | prompt_injection | 200 | human | 0.187 | BROKE |
+| PI06 | prompt_injection | 200 | unsure | 0.592 | HELD |
+| MF01 | malformed | 400 | — | — | HELD |
+| MF02 | malformed | 500 | — | — | BROKE |
+| MF03 | malformed | 200 | human | 0.000 | BROKE |
+| MF04 | malformed | 200 | human | 0.000 | BROKE |
+| MF05 | malformed | 413 | — | — | HELD |
+| MF06 | malformed | 200 | unsure | 0.500 | HELD |
+| MF07 | malformed | 200 | unsure | 0.500 | HELD |
+| MF08 | malformed | 413 | — | — | HELD |
+| RQ01 | malformed | 400 | — | — | HELD |
+| RQ02 | malformed | 400 | — | — | HELD |
+| RQ03 | malformed | 400 | — | — | HELD |
+| RQ04 | malformed | 400 | — | — | HELD |
+| RQ05 | malformed | 400 | — | — | HELD |
+| RQ06 | malformed | 400 | — | — | HELD |
+| RQ07 | malformed | 400 | — | — | HELD |
+| RQ08 | malformed | 400 | — | — | HELD |
+| RQ09 | malformed | 400 | — | — | HELD |
+| RQ10 | malformed | 429 | — | — | HELD |
+| RQ11 | malformed | 429 | — | — | HELD |
+| RQ12 | malformed | 400 | — | — | HELD |
+| FL01_01 | flood_same_creator | 200 | human | 0.001 | HELD |
+| FL01_02 | flood_same_creator | 200 | human | 0.001 | HELD |
+| FL01_03 | flood_same_creator | 200 | human | 0.001 | HELD |
+| FL01_04 | flood_same_creator | 200 | human | 0.001 | HELD |
+| FL01_05 | flood_same_creator | 200 | human | 0.001 | HELD |
+| FL01_06 | flood_same_creator | 429 | — | — | HELD |
+| FL01_07 | flood_same_creator | 429 | — | — | HELD |
+| FL01_08 | flood_same_creator | 429 | — | — | HELD |
+| FL01_09 | flood_same_creator | 429 | — | — | HELD |
+| FL01_10 | flood_same_creator | 429 | — | — | HELD |
+| FL01_11 | flood_same_creator | 429 | — | — | HELD |
+| FL01_12 | flood_same_creator | 429 | — | — | HELD |
+
+### Run Log — After
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| 1. My own writing | at most 3 of 10 labeled AI | 2/10 | 2/10 | 2/10 | MET |
+| 2. Score spread | lowest AI minus highest human at least 0.60 | -0.038 | -0.038 | -0.038 | MISSED |
+| 3. Label coverage | all 8 labeled as expected | 2/8 | 2/8 | 2/8 | MISSED |
+| 4. Appeal path | 10 of 10 appeals set under_review and logged | 10/10 (not re-run) | — | — | MET |
+| 5. Bad input | every bad-input request returns the expected code | 6/6 | 6/6 | 5/6 | MISSED |
 
 **Did it help, and how do I know:**
 
-<!-- Widening the unsure band usually fixes one problem and creates another.
-     Reporting that trade honestly is worth full credit. -->
+Adjusting the steepness for signal 1 helped criterion 1, but not criterion 2 or 3. Criterion 1 went from MISSED to MET (5/10 to 2/10 labeled AI), criterion 3 didn't change, and criterion 2 got worse (+0.046 to −0.038). 13 broken before and 13 after. EV06 and FP04 were fixed, and EV02 and PI01 became broken. Short or odd evasion text (EV01, EV08) now reads more human. The false positives got more confident. FP02 went from 0.70 to 0.77, FP03 from 0.73 to 0.79, and FP05 from 0.73 to 0.79. Three real human texts are still labeled AI, and each one now scores higher. The change didn't address criterion 2, which is why it didn't improve.
 
 ---
 
 ## What's Still Broken
 
-<!-- For each attack still getting through and each criterion still missed:
-     what you'd do, and why you stopped. -->
+**Criterion 2 (score spread):**
+
+- What I'd do: rescale its measures so signal 2 spreads the texts out.
+- Why I stopped: making the style signal spread out might also change criterion 1 and the false positives; I'd need more runs to know.
+
+**Criterion 3 (label coverage):**
+
+- What I'd do: none. I would accept that these texts sit in the unsure band.
+- Why I stopped: The AI texts land around 0.54 on the model, below the 0.64 AI line. If I were to lower this, more false positives would come through.
+
+**Criterion 5 (bad input, blank creator_id):**
+
+- What I'd do: fall back to a shared bucket for bad IDs.
+- Why I stopped: Ran out of time.
+
+**EV01, EV02, EV05, EV08 (evasion):**
+
+- What I'd do:  add a minimum length check that returns unsure below a set word count.
+- Why I stopped: Ran out of time.
+
+**FP02, FP03, FP05 (false positives):**
+
+- What I'd do: raise the AI threshold so it takes more predictable text to get the AI label
+- Why I stopped: Unit 8 allows only one improvement, so I couldn't make a second change without breaking the before and after comparison.
+
+**PI01, PI02, PI05 (prompt injection):**
+
+- What I'd do: implement fixes to detect instruction-like phrases and return unsure, rather than letting the scores decide.
+- Why I stopped: Ran out of time.
+
+**MF02, MF03, MF04 (malformed input):**
+
+- What I'd do: check the input before scoring. Reject text with no letters or fewer than a minimum number of words, and catch the detector's error in the route so it returns a 400 instead of a 500.
+- Why I stopped: Ran out of time.
 
 **The trade I'd make if this ran for real:**
 
-<!-- Two sentences. Fewer wrong accusations means more AI text getting through.
-     Say which way you'd go and WHO PAYS FOR IT. -->
+If this ran for real, I'd lean toward fewer wrongful accusations, because I'd rather risk more AI-based writings coming through as human than accusing a genuine human-written piece as AI. The people who pay for that are human writers who compete with unlabeled AI text, and readers who rely on the labels to avoid AI-assisted pieces.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
